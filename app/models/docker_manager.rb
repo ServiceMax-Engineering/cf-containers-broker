@@ -68,7 +68,7 @@ class DockerManager < ContainerManager
     Rails.logger.info("+-> Create options: #{container_create_opts.inspect}")
     container = Docker::Container.create(container_create_opts)
 
-    container_start_opts = start_options(guid)
+    container_start_opts = start_options(guid, parameters)
     Rails.logger.info("Starting Docker container `#{container_name(guid)}'...")
     Rails.logger.info("+-> Start options: #{container_start_opts.inspect}")
     container.start(container_start_opts)
@@ -93,7 +93,7 @@ class DockerManager < ContainerManager
     Rails.logger.info("+-> Create/update options: #{container_create_opts.inspect}")
     container = Docker::Container.create(container_create_opts)
 
-    container_start_opts = start_options(guid)
+    container_start_opts = start_options(guid, parameters)
     container_start_opts['PortBindings'] = port_bindings
     Rails.logger.info("Starting Docker container `#{container_name(guid)}'...")
     Rails.logger.info("+-> Start options: #{container_start_opts.inspect}")
@@ -395,7 +395,11 @@ class DockerManager < ContainerManager
     end
   end
 
-  def start_options(guid)
+  def start_options(guid, parameters = {})
+    volumes_from = []
+    if parameters.has_key?("volumes_from")
+      volumes_from[0] = parameters["volumes_from"]
+    end
     {
       'Links' => [],
       'LxcConf' => {},
@@ -406,7 +410,7 @@ class DockerManager < ContainerManager
       'PublishAllPorts' => false,
       'Privileged' => privileged,
       'ReadonlyRootfs' => false,
-      'VolumesFrom' => [],
+      'VolumesFrom' => volumes_from,
       'CapAdd' => cap_adds,
       'CapDrop' => cap_drops,
       'RestartPolicy' => restart_policy,
